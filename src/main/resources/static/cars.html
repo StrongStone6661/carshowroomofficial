@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .navbar h1 {
+            font-size: 40px;
+        }
+
+        .upload-label {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .upload-label:hover {
+            background-color: #2980b9;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            height: 200px;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .empty-gallery {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #95a5a6;
+            padding: 50px;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .pagination button:hover {
+            background-color: #2980b9;
+        }
+
+        .pagination button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <h1>Showroom</h1>
+        <label for="file-input" class="upload-label">Upload Images</label>
+        <input type="file" id="file-input" accept="image/*" multiple>
+    </nav>
+
+    <div class="container">
+        <div class="gallery" id="gallery">
+            <div class="empty-gallery">
+                <p>Your gallery is empty. Upload some images to get started!</p>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <button id="prev-btn" onclick="prevPage()" disabled>Previous</button>
+            <button id="next-btn" onclick="nextPage()">Next</button>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const pageSize = 10;
+    
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.getElementById('file-input');
+            loadGallery();
+    
+            fileInput.addEventListener('change', async function(e) {
+                const files = e.target.files;
+                if (files.length === 0) return;
+    
+                for (const file of files) {
+                    if (!file.type.match('image.*')) continue;
+    
+                    const formData = new FormData();
+                    formData.append('file', file);
+    
+                    try {
+                        const response = await axios.post('/api/images/upload', formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        });
+    
+                        console.log(response.data); 
+                        loadGallery(); 
+                    } catch (error) {
+                        console.error('Upload failed:', error);
+                        alert('Failed to upload image');
+                    }
+                }
+    
+                fileInput.value = ''; 
+            });
+        });
+    
+        async function loadGallery(page = currentPage, size = pageSize) {
+            try {
+                const response = await axios.get(`/api/images?page=${page}&size=${size}`);
+                const images = response.data;
+    
+                console.log(images); // Debug: Check what the backend is returning
+    
+                const gallery = document.getElementById('gallery');
+                gallery.innerHTML = '';
+    
+                if (!images || images.length === 0) {
+                    gallery.innerHTML = '<div class="empty-gallery"><p>Your gallery is empty. Upload some images to get started!</p></div>';
+                } else {
+                    images.forEach(url => addImageToGallery(url));
+                }
+    
+                // Disable/enable pagination buttons
+                document.getElementById('prev-btn').disabled = page === 0;
+                document.getElementById('next-btn').disabled = images.length < size;
+            } catch (error) {
+                console.error('Failed to fetch images:', error);
+            }
+        }
+    
+        function addImageToGallery(src) {
+            const gallery = document.getElementById('gallery');
+    
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+    
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = 'Gallery image';
+            img.onerror = () => console.error('Image failed to load:', src); // Debug if images don't load
+    
+            item.appendChild(img);
+            gallery.appendChild(item);
+        }
+    
+        function nextPage() {
+            currentPage++;
+            loadGallery();
+        }
+    
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                loadGallery();
+            }
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    
+</body>
+</html>
