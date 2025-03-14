@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 public class S3Service {
 
     private final S3Client s3Client;
-    private static final String BUCKET_NAME = "carsroombucket"; // Set your bucket name here
-    private static final String AWS_REGION = "us-east-2"; // Set your default region here
+    private static final String BUCKET_NAME = "carsroombucket"; 
+    private static final String AWS_REGION = "us-east-1"; 
 
     public S3Service() {
         this.s3Client = S3Client.builder()
