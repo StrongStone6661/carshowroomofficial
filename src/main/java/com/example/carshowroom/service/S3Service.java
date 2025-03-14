@@ -20,15 +20,15 @@ public class S3Service {
     /*
      * Setting up the AWS S3 connection
      */
-    @Value("${aws.s3.bucket-name}")
+    @Value("${AWS_BUCKETNAME}")
     private String bucketName;
 
-    @Value("${aws.region}")
+    @Value("${AWS_REGION}")
     private String region; // Added this so we can reuse it
 
-    public S3Service(@Value("${aws.region}") String region,
-                     @Value("${aws.access-key}") String accessKey,
-                     @Value("${aws.secret-key}") String secretKey) {
+    public S3Service(@Value("${AWS_REGION}") String region,
+                     @Value("${secrets.AWS_ACCESS_KEY_ID}") String accessKey,
+                     @Value("${secrets.AWS_SECRET_ACCESS_KEY}") String secretKey) {
 
         this.s3Client = S3Client.builder()
                 .region(Region.of(region))
