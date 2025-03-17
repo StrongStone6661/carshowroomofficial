@@ -43,4 +43,16 @@ public class ImageController {
 
         return ResponseEntity.ok(files.subList(fromIndex, toIndex));
     }
+
+    @DeleteMapping("/delete/{fileName}")
+    public ResponseEntity<String> deleteImage(@PathVariable String fileName) {
+        boolean deleted = s3Service.deleteFile(fileName);
+        if (deleted) {
+            return ResponseEntity.ok("Image deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Failed to delete image");
+        }
+    }
+        
+    
 }

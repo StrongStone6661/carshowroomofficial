@@ -78,44 +78,24 @@
             object-fit: cover;
         }
 
-        .empty-gallery {
-            grid-column: 1 / -1;
-            text-align: center;
-            color: #95a5a6;
-            padding: 50px;
-            background-color: white;
-            border-radius: 8px;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .pagination button {
-            background-color: #3498db;
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(246, 0, 0, 0.223);
             color: white;
             border: none;
-            padding: 10px 20px;
-            margin: 0 5px;
-            border-radius: 4px;
+            padding: 5px 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            border-radius: 5px;
+            transition: 1s cubic-bezier(0.075, 0.82, 0.165, 1);
         }
-
-        .pagination button:hover {
-            background-color: #2980b9;
-        }
-
-        .pagination button:disabled {
-            background-color: #bdc3c7;
-            cursor: not-allowed;
+        .delete-btn:hover {
+            background-color: rgb(190, 34, 6);
         }
     </style>
 </head>
 <body>
-
     <nav class="navbar">
         <h1>Showroom</h1>
         <label for="file-input" class="upload-label">Upload Images</label>
@@ -128,103 +108,66 @@
                 <p>Your gallery is empty. Upload some images to get started!</p>
             </div>
         </div>
-
-        <div class="pagination">
-            <button id="prev-btn" onclick="prevPage()" disabled>Previous</button>
-            <button id="next-btn" onclick="nextPage()">Next</button>
-        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        let currentPage = 0;
-        const pageSize = 10;
-    
         document.addEventListener('DOMContentLoaded', function() {
-            const fileInput = document.getElementById('file-input');
             loadGallery();
-    
-            fileInput.addEventListener('change', async function(e) {
-                const files = e.target.files;
-                if (files.length === 0) return;
-    
-                for (const file of files) {
-                    if (!file.type.match('image.*')) continue;
-    
-                    const formData = new FormData();
-                    formData.append('file', file);
-    
-                    try {
-                        const response = await axios.post('/api/images/upload', formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        });
-    
-                        console.log(response.data); 
-                        loadGallery(); 
-                    } catch (error) {
-                        console.error('Upload failed:', error);
-                        alert('Failed to upload image');
-                    }
-                }
-    
-                fileInput.value = ''; 
-            });
         });
-    
-        async function loadGallery(page = currentPage, size = pageSize) {
+
+        async function loadGallery() {
             try {
-                const response = await axios.get(`/api/images?page=${page}&size=${size}`);
+                const response = await axios.get('/api/images');
                 const images = response.data;
-    
-                console.log(images); // Debug: Check what the backend is returning
-    
                 const gallery = document.getElementById('gallery');
                 gallery.innerHTML = '';
-    
+
                 if (!images || images.length === 0) {
                     gallery.innerHTML = '<div class="empty-gallery"><p>Your gallery is empty. Upload some images to get started!</p></div>';
                 } else {
                     images.forEach(url => addImageToGallery(url));
                 }
-    
-                // Disable/enable pagination buttons
-                document.getElementById('prev-btn').disabled = page === 0;
-                document.getElementById('next-btn').disabled = images.length < size;
             } catch (error) {
                 console.error('Failed to fetch images:', error);
             }
         }
-    
+
         function addImageToGallery(src) {
             const gallery = document.getElementById('gallery');
-    
             const item = document.createElement('div');
             item.className = 'gallery-item';
-    
+            
             const img = document.createElement('img');
             img.src = src;
             img.alt = 'Gallery image';
-            img.onerror = () => console.error('Image failed to load:', src); // Debug if images don't load
-    
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerText = 'X';
+            deleteBtn.onclick = () => deleteImage(src, item);
+            
             item.appendChild(img);
+            item.appendChild(deleteBtn);
             gallery.appendChild(item);
         }
-    
-        function nextPage() {
-            currentPage++;
-            loadGallery();
-        }
-    
-        function prevPage() {
-            if (currentPage > 0) {
-                currentPage--;
-                loadGallery();
+
+        async function deleteImage(imageUrl, item) {
+            try {
+                const fileName = imageUrl.split('/').pop();
+                const response = await axios.delete(`/api/images/delete/${fileName}`);
+                
+                if (response.status === 200) {
+                    alert('Image deleted successfully');
+                    item.remove();
+                } else {
+                    alert('Failed to delete image');
+                }
+            } catch (error) {
+                console.error('Error deleting image:', error);
+                alert('Error deleting image');
             }
         }
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    
 </body>
 </html>

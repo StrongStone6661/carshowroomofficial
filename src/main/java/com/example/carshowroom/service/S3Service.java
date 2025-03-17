@@ -24,6 +24,9 @@ public class S3Service {
                 .build();
     }
 
+    /*
+     * method to upload file to S3 bucket
+     */
     public String uploadFile(String fileName, byte[] fileData) {
         try {
             s3Client.putObject(PutObjectRequest.builder()
@@ -38,6 +41,9 @@ public class S3Service {
         }
     }
 
+    /*
+     * method to list all files in s3 bucket
+     */
     public List<String> listFiles() {
         try {
             ListObjectsV2Response response = s3Client.listObjectsV2(ListObjectsV2Request.builder()
@@ -49,6 +55,22 @@ public class S3Service {
                     .collect(Collectors.toList());
         } catch (S3Exception e) {
             throw new RuntimeException("Failed to list files: " + e.getMessage());
+        }
+    }
+
+    /*
+     * method to delete file from s3 bucket
+     */
+    public boolean deleteFile(String fileName) {
+        
+        try {
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(BUCKET_NAME)
+                    .key(fileName)
+                    .build());
+            return true;
+        }catch(S3Exception e) {
+            return false;
         }
     }
 }
