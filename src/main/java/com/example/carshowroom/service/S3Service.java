@@ -42,19 +42,54 @@ public class S3Service {
     }
 
     /*
-     * method to list all files in s3 bucket
+     * method to list all files in s3 bucket with pagination support
+     * @param maxKeys maximum number of keys to return per page
+     * @param continuationToken token for the next page of results
+     * @return S3ListResponse containing the list of file URLs and next continuation token
      */
-    public List<String> listFiles() {
+    public S3ListResponse listFiles(Integer maxKeys, String continuationToken) {
         try {
-            ListObjectsV2Response response = s3Client.listObjectsV2(ListObjectsV2Request.builder()
-                    .bucket(BUCKET_NAME)
-                    .build());
+            ListObjectsV2Request.Builder requestBuilder = ListObjectsV2Request.builder()
+                    .bucket(BUCKET_NAME);
 
-            return response.contents().stream()
+            if (maxKeys != null) {
+                requestBuilder.maxKeys(maxKeys);
+            }
+
+            if (continuationToken != null && !continuationToken.isEmpty()) {
+                requestBuilder.continuationToken(continuationToken);
+            }
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(requestBuilder.build());
+
+            List<String> fileUrls = response.contents().stream()
                     .map(s3Object -> "https://" + BUCKET_NAME + ".s3." + AWS_REGION + ".amazonaws.com/" + s3Object.key())
                     .collect(Collectors.toList());
+
+            return new S3ListResponse(fileUrls, response.nextContinuationToken());
         } catch (S3Exception e) {
             throw new RuntimeException("Failed to list files: " + e.getMessage());
+        }
+    }
+
+    /*
+     * Response class to hold paginated S3 results
+     */
+    public static class S3ListResponse {
+        private final List<String> fileUrls;
+        private final String nextContinuationToken;
+
+        public S3ListResponse(List<String> fileUrls, String nextContinuationToken) {
+            this.fileUrls = fileUrls;
+            this.nextContinuationToken = nextContinuationToken;
+        }
+
+        public List<String> getFileUrls() {
+            return fileUrls;
+        }
+
+        public String getNextContinuationToken() {
+            return nextContinuationToken;
         }
     }
 

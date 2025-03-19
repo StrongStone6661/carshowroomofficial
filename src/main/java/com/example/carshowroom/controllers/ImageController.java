@@ -30,18 +30,10 @@ public class ImageController {
     }
 
     @GetMapping
-    public ResponseEntity<List<String>> getImages(@RequestParam(defaultValue = "0") int page,
-                                                  @RequestParam(defaultValue = "10") int size) {
-        List<String> files = s3Service.listFiles();
-
-        int fromIndex = page * size;
-        int toIndex = Math.min(fromIndex + size, files.size());
-
-        if (fromIndex >= files.size()) {
-            return ResponseEntity.ok(Collections.emptyList());
-        }
-
-        return ResponseEntity.ok(files.subList(fromIndex, toIndex));
+    public ResponseEntity<S3Service.S3ListResponse> getImages(
+            @RequestParam(required = false) Integer maxKeys,
+            @RequestParam(required = false) String continuationToken) {
+        return ResponseEntity.ok(s3Service.listFiles(maxKeys, continuationToken));
     }
 
     @DeleteMapping("/delete/{fileName}")
