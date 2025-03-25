@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 public class S3Service {
 
     private final S3Client s3Client;
-    private static final String BUCKET_NAME = "carsroombucketshowroom"; 
-    private static final String AWS_REGION = "us-east-1"; 
+    private static final String BUCKET_NAME = "carsshowroom"; 
+    private static final String AWS_REGION = "eu-central-1"; 
 
     public S3Service() {
         this.s3Client = S3Client.builder()
@@ -41,12 +41,7 @@ public class S3Service {
         }
     }
 
-    /*
-     * method to list all files in s3 bucket with pagination support
-     * @param maxKeys maximum number of keys to return per page
-     * @param continuationToken token for the next page of results
-     * @return S3ListResponse containing the list of file URLs and next continuation token
-     */
+
     public S3ListResponse listFiles(Integer maxKeys, String continuationToken) {
         try {
             ListObjectsV2Request.Builder requestBuilder = ListObjectsV2Request.builder()
